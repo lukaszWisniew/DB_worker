@@ -30,3 +30,10 @@
 *.exe
 *.out
 *.app
+# eclipse
+.cproject
+.project
+.settings/
+
+# DB_worker
+DB_worker

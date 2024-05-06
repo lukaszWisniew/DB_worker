@@ -39,7 +39,7 @@ to_json(json& j, const DataQueueStatus& inDqs) {
 	j["version"] = inDqs.version;
 	j["frameType"] = inDqs.frameType;
 	j["pid"] = inDqs.pid;
-	j["data"] = json{{"status",queueStatus},{"size",0}, {"maxSize", inDqs.data.maxSize}, {"openSize", inDqs.data.openSize}};
+	j["data"] = json{{"status",queueStatus}/*,{"size",0}, {"maxSize", inDqs.data.maxSize}, {"openSize", inDqs.data.openSize}*/};
 }
 void
 from_json(const json& j, DataQueueStatus& outDqs) {}
@@ -53,9 +53,9 @@ to_json(json& j, const QueueData& qd) {}
 
 void
 from_json(const json& inJ, QueueData& outQD) {
-	outQD.maxSize = inJ["maxSize"].get<int>();
+/*	outQD.maxSize = inJ["maxSize"].get<int>();
 	outQD.openSize = inJ["openSize"].get<int>();
-	outQD.size = inJ["size"].get<int>();
+	outQD.size = inJ["size"].get<int>();*/
 	outQD.dataQueueStatus = inJ["status"].get<QueueStatus::Type>();
 }
 

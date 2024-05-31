@@ -204,6 +204,12 @@ void Configuration::readConfigFile() {
 				value = lw_lib::trim(configFile.getParameter( section+"/"+params[i] ), "\" \t\r\n");
 
 				managerRBConfig.setPass(value);
+			} else if ( param == "STATUS_INTERVAL" ) {
+				value = lw_lib::trim(configFile.getParameter( section+"/"+params[i] ), "\" \t\r\n");
+				int interval = lw_lib::stringTo<int>(value);
+				if (interval > 0 ) {
+					managerRBConfig.setStatusInterval(interval);
+				}
 			}
 		}
 

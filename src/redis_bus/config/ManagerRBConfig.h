@@ -21,6 +21,11 @@
  * @See RedisBusConfig
  */
 class ManagerRBConfig final : public RedisBusConfig {
+private:
+	/**
+	 * Frequency of sending db_worker status to the manager bus.
+	 */
+	int repeat_status_interval = 1;
 public:
 	ManagerRBConfig();
 	virtual ~ManagerRBConfig();
@@ -36,6 +41,20 @@ public:
 	 * Checks the correctness of the set configuration.
 	 */
 	bool isConfigured() const;
+
+	/**
+	 * Setting the frequency of sending the db_worker status to the manager bus.
+	 *
+	 * @param inStatusInterval interval in seconds
+	 */
+	void setStatusInterval( int inStatusInterval );
+
+	/**
+	 * Getting the frequency of sending the db_worker status to the manager bus.
+	 *
+	 * @return interval in seconds
+	 */
+	int getStatusInterval();
 };
 
 #endif /* REDIS_BUS_MANAGERRBCONFIG_H_ */

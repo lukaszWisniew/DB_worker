@@ -28,17 +28,17 @@ public:
 	/**
 	 * Maximum queue length.
 	 */
-	int             maxSize;
+	//int             maxSize;
 
 	/**
 	 * The value below which unlocks the acceptance of new queries.
 	 */
-	int             openSize;
+	//int             openSize;
 
 	/**
 	 * Current queue length.
 	 */
-	int             size;
+	//int             size;
 public:
 	QueueData();
 	virtual ~QueueData();

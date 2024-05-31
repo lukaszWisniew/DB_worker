@@ -26,21 +26,21 @@ public:
 	/**
 	 * Another context usually the main one.
 	 */
-	void*            external_ctx;
+	void* external_ctx;
 
 	/**
 	 *  event_base structure holds a set of events and can poll to determine which events are active
 	 *
 	 *  @see libevent
 	 */
-	event_base*      base;
+	event_base* base;
 
 	/**
 	 * Log processor.
 	 *
 	 * @see lw_lib::Log
 	 */
-	lw_lib::Log*     log;
+	lw_lib::Log* log;
 
 	/**
 	 * Time value for reconnect to redis

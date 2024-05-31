@@ -162,6 +162,11 @@ public:
 	 */
 	QueueStatus::Type getQueueStatus();
 
+	/**
+	 * They send the db_worker status to the manager bus.
+	 */
+	void sendQueueStatusToManager();
+
 private:
    /**
     * Connecting to the database query bus.
@@ -258,6 +263,17 @@ private:
 	 * @param ptr The value that was passed in for arg when the function was constructed.
 	 */
 	static void _RedisReconnect_cb( evutil_socket_t fd, short what, void *ptr );
+
+	/**
+	 * Callback function for cyclically sending the db_worker status to the manager bus.
+	 *
+	 * @See libevent callback
+	 *
+	 * @param fd The file descriptor
+	 * @param what Is a set of the flags listed above.
+	 * @param ptr The value that was passed in for arg when the function was constructed.
+	 */
+	static void _StatusSend_cb( evutil_socket_t fd, short what, void *ptr );
 
 	/**
 	 * Callback triggered after receiving a frame from the data bus.

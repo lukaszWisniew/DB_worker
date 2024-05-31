@@ -57,6 +57,21 @@ public:
 	 * db_worker PID.
 	 */
 	pid_t pid;
+
+	/**
+	 * Time value frequency of sending db_worker status to the manager bus.
+	 *
+	 * @see libevent
+	 */
+	struct timeval tv_statusInterval;
+
+	/**
+	 * Event for f sending db_worker status to the manager bus.
+	 *
+	 * @see libevent
+	 */
+	struct event* statusResend_ev;
+
 public:
 	RedisDataCtx();
 	virtual ~RedisDataCtx();

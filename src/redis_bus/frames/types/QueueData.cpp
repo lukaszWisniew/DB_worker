@@ -19,7 +19,7 @@ QueueData::~QueueData() {}
 void
 QueueData::clear() {
 	dataQueueStatus = QueueStatus::Type::none;
-	maxSize         = 0;
+/*	maxSize         = 0;
 	openSize        = 0;
-	size 			= 0;
+	size 			= 0;*/
 }

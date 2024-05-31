@@ -117,9 +117,9 @@ DataQueueStatus::clear() {
 void
 DataQueueStatus::showData() {
 	std::cout << "QUEUE STATUS: " <<  QueueStatus::typeToString(data.dataQueueStatus) << "\n"
-			  << "MAX SIZE: " << data.maxSize << "\n"
+/*			  << "MAX SIZE: " << data.maxSize << "\n"
 			  << "OPEN SIZE: " << data.openSize << "\n"
-			  << "SIZE: " << data.size << "\n"
+			  << "SIZE: " << data.size << "\n"*/
 			  << "PID: " << pid << std::endl;
 }
 

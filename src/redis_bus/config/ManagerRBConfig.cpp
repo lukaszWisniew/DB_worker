@@ -25,6 +25,7 @@ ManagerRBConfig::showConfig() {
 	std::cout << " " << "PORT = " << port << std::endl;
 	std::cout << " " << "CHANNEL_NAME = " << chName << std::endl;
 	std::cout << " " << "PASS = ******** " << std::endl;
+	std::cout << " " << "STATUS_INTERVAL = " << repeat_status_interval << std::endl;
 	std::cout << "[]" << std::endl;
 	std::cout << "" << std::endl;
 }
@@ -38,4 +39,16 @@ ManagerRBConfig::isConfigured() const {
 	}
 
 	return output;
+}
+
+void
+ManagerRBConfig::setStatusInterval(int inStatusInterval) {
+	if ( inStatusInterval > 0 ) {
+		repeat_status_interval = inStatusInterval;
+	}
+}
+
+int
+ManagerRBConfig::getStatusInterval() {
+	return repeat_status_interval;
 }

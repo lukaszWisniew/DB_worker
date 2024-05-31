@@ -48,6 +48,10 @@ RedisDataBus::setContext( Context *inCtx ) {
 
 	_RDCtx.pid = inCtx->pid;
 
+	_RDCtx.tv_statusInterval.tv_sec = (static_cast<Configuration*>(inCtx->getConfiguration()))->getManagerRBConfig()->getStatusInterval();
+	_RDCtx.statusResend_ev = evtimer_new (_RDCtx.base, _StatusSend_cb,  &_RDCtx);
+	evtimer_add (_RDCtx.statusResend_ev, &(_RDCtx.tv_statusInterval));
+
 	reconnect();
 }
 
@@ -149,6 +153,11 @@ RedisDataBus::isQueueStatus( QueueStatus::Type inDataQueueStatus ) {
 QueueStatus::Type
 RedisDataBus::getQueueStatus() {
 	return _RDCtx.dataQueueStatus;
+}
+
+void
+RedisDataBus::sendQueueStatusToManager() {
+	_sendQueueStatusToManager();
 }
 
 void
@@ -335,13 +344,30 @@ RedisDataBus::_RedisReconnect_cb( evutil_socket_t fd, short what, void *ptr ) {
 
 	RedisDataCtx *ctx = static_cast<RedisDataCtx*>(ptr);
 
-	std::string debugMess = "Context: Redis Data BUS reconnect.";
+	std::string debugMess = "RedisDataBus: Redis Data BUS reconnect.";
 	ctx->log->sendDebug(debugMess);
 
 	ctx->redisDataBus->reconnect();
 
 	evtimer_add (ctx->redisReconnect_ev, &(ctx->tv_reconnect));
 
+}
+
+void
+RedisDataBus::_StatusSend_cb( evutil_socket_t fd, short what, void *ptr ) {
+
+	RedisDataCtx *ctx = static_cast<RedisDataCtx*>(ptr);
+
+	if (ctx->redisDataConnected) {
+		std::string debugMess = "RedisDataBus: Cyclical status sending to the manager's bus.";
+		ctx->log->sendDebug(debugMess);
+		ctx->redisDataBus->sendQueueStatusToManager();
+	} else {
+		std::string debugMess = "RedisDataBus: Cyclical status sending to the manager's bus. - Manager's Bus is disconnected.";
+		ctx->log->sendError(debugMess);
+	}
+
+	evtimer_add (ctx->statusResend_ev, &(ctx->tv_statusInterval));
 }
 
 void

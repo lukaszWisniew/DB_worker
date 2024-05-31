@@ -19,6 +19,10 @@ RedisDataCtx::RedisDataCtx()/*:default_tv_toSend (100000), data_tv_ToSend(1000)*
 	dataQueueStatus = QueueStatus::Type::START;
 
 	pid = 0;
+
+	tv_statusInterval.tv_sec = 1;
+	tv_statusInterval.tv_usec = 0;
+	statusResend_ev = NULL;
 }
 
 RedisDataCtx::~RedisDataCtx() {}

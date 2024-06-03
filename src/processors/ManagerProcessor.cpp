@@ -26,14 +26,14 @@ ManagerProcessor::~ManagerProcessor() {}
 void
 ManagerProcessor::setContext( Context *inCtx ) {
 	_ctx = inCtx;
-	_pidStatus[_ctx->pid] = _ctx->redisDataBus.getQueueStatus();
+	//_pidStatus[_ctx->pid] = _ctx->redisDataBus.getQueueStatus();
 }
 
 void
 ManagerProcessor::takeData( JsonRedisMainFrame* inJsonRedisFrame ) {
 
 	if ( DataQueueStatus::itIsString(inJsonRedisFrame->frameType)) {
-		_setStatus((dynamic_cast<DataQueueStatus*>(inJsonRedisFrame))->getData(), (dynamic_cast<DataQueueStatus*>(inJsonRedisFrame))->pid);
+		//_setStatus((dynamic_cast<DataQueueStatus*>(inJsonRedisFrame))->getData(), (dynamic_cast<DataQueueStatus*>(inJsonRedisFrame))->pid);
 	} else if (DBWorkersStatus::itIsString(inJsonRedisFrame->frameType)) {
 		_setStatuses((dynamic_cast<DBWorkersStatus*>(inJsonRedisFrame))->getData());
 	}
@@ -165,8 +165,10 @@ ManagerProcessor::_engine() {
 			if ( _old_status.first == 0 ) {
 				if (_getOpenPID(pid)) { //Pobieramy jaki pid jest OPEN
 					//Jest ktos otwarty ->MY STAND_BY
-					if (!(_ctx->redisDataBus.isQueueStatus( QueueStatus::Type::BLOCKED))) {
-						_setQueueStatus_STAND_BY();
+					if ( pid != _ctx->pid ) {
+						if (!(_ctx->redisDataBus.isQueueStatus( QueueStatus::Type::BLOCKED))) {
+							_setQueueStatus_STAND_BY();
+						}
 					}
 
 				} else if ( _getClosedPID(pid) ) {

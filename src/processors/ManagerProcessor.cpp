@@ -109,6 +109,7 @@ ManagerProcessor::emergencyAmINext() {
 
 void
 ManagerProcessor::_setStatuses( WorkersStatusData& inWorkersStatusData ) {
+	_pidStatus.clear();
 	for ( auto d : inWorkersStatusData.wqs ) {
 		_pidStatus[d.pid] = QueueStatus::typeFromString(d.status);
 	}

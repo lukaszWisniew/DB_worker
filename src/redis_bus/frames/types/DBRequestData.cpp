@@ -22,3 +22,18 @@ DBRequestData::clear() {
 	queryName.clear();
 	variables.clear();
 }
+
+
+DBRequestData&
+DBRequestData::operator=(const DBRequestData& other) {
+	if (this == &other) {
+		return *this; // samo-przypisanie
+	}
+
+	clear();
+
+	queryName = other.queryName;
+	variables = other.variables;
+
+	return *this;
+}

@@ -27,6 +27,23 @@ DataDBRequest::DataDBRequest() {
 
 DataDBRequest::~DataDBRequest() {}
 
+DataDBRequest&
+DataDBRequest::operator=(const DataDBRequest& other) {
+
+    if (this == &other) {
+		return *this; // samo-przypisanie
+	}
+
+    clear();
+
+    pid = other.pid;
+	data = other.data;
+	_strData = other._strData;
+
+
+	return *this;
+}
+
 bool
 DataDBRequest::itIsJson(const std::string& inJSON) {
 	bool outStatus = false;

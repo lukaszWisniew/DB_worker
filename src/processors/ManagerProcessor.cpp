@@ -70,7 +70,6 @@ ManagerProcessor::setQueueStatus_STAND_BY() {
 
 void
 ManagerProcessor::setStatusAfterRequestDB() {
-	int pid = -1;
 
 	if ( imAlone() ) {
 		_setQueueStatus_OPEN();
@@ -111,6 +110,10 @@ ManagerProcessor::emergencyAmINext() {
 
 	if ( _getOpenPID(pid) ){
 		if ( _amInext(pid) ) {
+			outStatus = true;
+		}
+	} else {
+		if ( _iMFirst() ) {
 			outStatus = true;
 		}
 	}
@@ -322,7 +325,7 @@ ManagerProcessor::_setQueueStatus_BLOCKED() {
 
 void
 ManagerProcessor::_setQueueStatus_STAND_BY() {
-	int pid = -1;
+
 	if (_ctx != NULL ) {
 		if (!(_ctx->redisDataBus.isQueueStatus( QueueStatus::Type::STAND_BY))) { //Czy nie jesteśmy juz STAND_BY?
 			_ctx->redisDataBus.setQueueStatus_STAND_BY();

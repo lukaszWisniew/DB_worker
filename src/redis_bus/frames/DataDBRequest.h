@@ -51,6 +51,8 @@ public:
 	DataDBRequest();
 	virtual ~DataDBRequest();
 
+	DataDBRequest& operator=(const DataDBRequest& other);
+
 	/**
 	 * Checking whether the transferred data is in json format and contains the appropriate frame name.
 	 *

@@ -52,6 +52,10 @@ private:
 	 */
 	struct event* stand_by_ev;
 
+
+
+	DataDBRequest *frame;
+
 public:
 	DBDataProcessor();
 	virtual ~DBDataProcessor();
@@ -70,6 +74,7 @@ public:
 	 */
 	void takeData( JsonRedisMainFrame* inJsonRedisFrame );
 
+	void setStatusAndSendQuery_stand_by( );
 
 
 private:

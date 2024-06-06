@@ -27,6 +27,8 @@ DBDataProcessor::DBDataProcessor() {
 	tv_stand_by_delay.tv_usec = 100000;
 
 	stand_by_ev = NULL;
+
+	frame = new DataDBRequest;
 }
 
 DBDataProcessor::~DBDataProcessor() {
@@ -55,6 +57,24 @@ DBDataProcessor::takeData(JsonRedisMainFrame *inJsonRedisFrame) {
 	inJsonRedisFrame = NULL;
 }
 
+/*
+DataDBRequest *
+DBDataProcessor::getFrame() {
+	return frame;
+}
+
+void
+DBDataProcessor::setStatusAndSendQuery( DataDBRequest *inFram ) {
+	_setStatusAndSendQuery(inFram);
+}
+*/
+
+
+void
+DBDataProcessor::setStatusAndSendQuery_stand_by( ) {
+	_setStatusAndSendQuery(frame);
+}
+
 void
 DBDataProcessor::_engine_stand_by_check_cb(evutil_socket_t fd, short what, void *ptr) {
 
@@ -62,7 +82,7 @@ DBDataProcessor::_engine_stand_by_check_cb(evutil_socket_t fd, short what, void 
 
 	if (!(ctx->managerProcessor.processedByOther())) {
 		if (ctx->managerProcessor.emergencyAmINext()) {
-		//	_setStatusAndSendQuery(inFrame);
+			ctx->dbDataProcessor.setStatusAndSendQuery_stand_by();
 		}
 	}
 }
@@ -79,7 +99,17 @@ DBDataProcessor::_engine(DataDBRequest *inFrame) {
 				_setStatusAndSendQuery(inFrame);
 			} else if ( _ctx->redisDataBus.isQueueStatus( QueueStatus::Type::STAND_BY )) {
 				//TODO: Tutaj event
+
+				*frame = *inFrame;
+
 				event_add(stand_by_ev, &tv_stand_by_delay);
+
+/*				if (!(_ctx->managerProcessor.processedByOther())) {
+					if (_ctx->managerProcessor.emergencyAmINext()) {
+						//_setStatusAndSendQuery(inFrame);
+					}
+				}*/
+
 			} else if ( _ctx->redisDataBus.isQueueStatus( QueueStatus::Type::CLOSED )) {
 
 			}  else {
@@ -98,15 +128,8 @@ DBDataProcessor::_setStatusAndSendQuery(DataDBRequest *inFrame) {
 void
 DBDataProcessor::_statusAfterResponse() {
 
-
 	_ctx->managerProcessor.setStatusAfterRequestDB();
 
-/*	if ( _ctx->managerProcessor.imAlone() ) {
-		_ctx->managerProcessor.setQueueStatus_OPEN();
-	} else {
-		//_ctx->managerProcessor.setQueueStatus_STAND_BY();
-		_ctx->managerProcessor.setStatusAfterRequestDB();
-	}*/
 }
 
 void

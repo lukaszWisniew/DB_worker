@@ -100,6 +100,11 @@ public:
 	void setQueueStatus_STAND_BY();
 
 	/**
+	 * Setting the appropriate status after making a request to the database.
+	 */
+	void setStatusAfterRequestDB();
+
+	/**
 	 * Public adapter for setting status: arrival of a new frame on the database query bus.
 	 */
 	void setTrueNewFrameFromBus();
@@ -155,6 +160,11 @@ private:
 	void _engine();
 
 	/**
+	 * Engine, algorithm that determines the program status in the context of the status of other db_workers.
+	 */
+	void _engine_m();
+
+	/**
 	 * Getting the pid of the first db_worker with OPEN status.
 	 *
 	 * @param outPid PID number of the found DB_worker. 0 if not found.
@@ -173,6 +183,15 @@ private:
 	bool _getClosedPID(int &outPid);
 
 	/**
+	 * Getting the pid of the first db_worker with BLOCKED status.
+	 *
+	 * @param outPid PID number of the found DB_worker. 0 if not found.
+	 *
+	 * @return true if found,
+	 */
+	bool _getBlockedPID(int &outPid);
+
+	/**
 	 * Checking if our PID is next.
 	 *
 	 * @param inPid Pid number of db_worker
@@ -189,6 +208,15 @@ private:
 	 * @return Pid of the next db_worker.
 	 */
 	int  _findNext( int &inPid );
+
+	/**
+	 * After receiving the return frame from the manager,
+	 * check whether we are the first to set the status to OPEN.
+	 *
+	 * @return true if we are to set the status to OPEN.
+	 */
+
+	bool _iMFirst();
 
 	/**
 	 * Clear _old_status parameter.

@@ -20,17 +20,17 @@
 
 /** Program version */
 #ifndef VERSION
- #define VERSION "0.1.00"
+ #define VERSION "0.1.01"
 #endif
 
 /** Release date of program */
 #ifndef RELEASE_DATE
- #define RELEASE_DATE "21.02.2024"
+ #define RELEASE_DATE "06.06.2024"
 #endif
 
 /** Program compilation date */
 #ifndef BUILD_DATE
- #define BUILD_DATE "21.02.2024"
+ #define BUILD_DATE "06.06.2024"
 #endif
 
 /** Program description */

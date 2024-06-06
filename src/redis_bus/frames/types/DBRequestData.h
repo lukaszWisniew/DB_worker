@@ -33,6 +33,8 @@ public:
 	DBRequestData();
 	virtual ~DBRequestData();
 
+	DBRequestData& operator=(const DBRequestData& other);
+
 	/**
 	 * Clearing variables.
 	 */

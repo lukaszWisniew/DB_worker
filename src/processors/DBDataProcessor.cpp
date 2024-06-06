@@ -22,6 +22,11 @@
 DBDataProcessor::DBDataProcessor() {
 	_ctx = NULL;
 	_dbDataMatrix.clear();
+
+	tv_stand_by_delay.tv_sec = 0;
+	tv_stand_by_delay.tv_usec = 100000;
+
+	stand_by_ev = NULL;
 }
 
 DBDataProcessor::~DBDataProcessor() {
@@ -30,6 +35,9 @@ DBDataProcessor::~DBDataProcessor() {
 void
 DBDataProcessor::setContext(Context *inCtx) {
 	_ctx = inCtx;
+
+	stand_by_ev = event_new(_ctx->_base, -1, EV_TIMEOUT, _engine_stand_by_check_cb, _ctx);
+
 }
 
 void
@@ -48,6 +56,18 @@ DBDataProcessor::takeData(JsonRedisMainFrame *inJsonRedisFrame) {
 }
 
 void
+DBDataProcessor::_engine_stand_by_check_cb(evutil_socket_t fd, short what, void *ptr) {
+
+	Context* ctx = static_cast<Context*>(ptr);
+
+	if (!(ctx->managerProcessor.processedByOther())) {
+		if (ctx->managerProcessor.emergencyAmINext()) {
+		//	_setStatusAndSendQuery(inFrame);
+		}
+	}
+}
+
+void
 DBDataProcessor::_engine(DataDBRequest *inFrame) {
 	if ( !(_ctx->redisDataBus.isQueueStatus( QueueStatus::Type::START ))) {
 		if ( _ctx->managerProcessor.imAlone() ) { //Jestesmy sami
@@ -58,11 +78,8 @@ DBDataProcessor::_engine(DataDBRequest *inFrame) {
 			if ( _ctx->redisDataBus.isQueueStatus( QueueStatus::Type::OPEN )) {
 				_setStatusAndSendQuery(inFrame);
 			} else if ( _ctx->redisDataBus.isQueueStatus( QueueStatus::Type::STAND_BY )) {
-				if (!(_ctx->managerProcessor.processedByOther())) {
-					if (_ctx->managerProcessor.emergencyAmINext()) {
-						_setStatusAndSendQuery(inFrame);
-					}
-				}
+				//TODO: Tutaj event
+				event_add(stand_by_ev, &tv_stand_by_delay);
 			} else if ( _ctx->redisDataBus.isQueueStatus( QueueStatus::Type::CLOSED )) {
 
 			}  else {
@@ -81,11 +98,15 @@ DBDataProcessor::_setStatusAndSendQuery(DataDBRequest *inFrame) {
 void
 DBDataProcessor::_statusAfterResponse() {
 
-	if ( _ctx->managerProcessor.imAlone() ) {
+
+	_ctx->managerProcessor.setStatusAfterRequestDB();
+
+/*	if ( _ctx->managerProcessor.imAlone() ) {
 		_ctx->managerProcessor.setQueueStatus_OPEN();
 	} else {
-		_ctx->managerProcessor.setQueueStatus_STAND_BY();
-	}
+		//_ctx->managerProcessor.setQueueStatus_STAND_BY();
+		_ctx->managerProcessor.setStatusAfterRequestDB();
+	}*/
 }
 
 void

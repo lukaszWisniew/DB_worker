@@ -26,14 +26,13 @@ ManagerProcessor::~ManagerProcessor() {}
 void
 ManagerProcessor::setContext( Context *inCtx ) {
 	_ctx = inCtx;
-	//_pidStatus[_ctx->pid] = _ctx->redisDataBus.getQueueStatus();
 }
 
 void
 ManagerProcessor::takeData( JsonRedisMainFrame* inJsonRedisFrame ) {
 
 	if ( DataQueueStatus::itIsString(inJsonRedisFrame->frameType)) {
-		//_setStatus((dynamic_cast<DataQueueStatus*>(inJsonRedisFrame))->getData(), (dynamic_cast<DataQueueStatus*>(inJsonRedisFrame))->pid);
+		_setStatus((dynamic_cast<DataQueueStatus*>(inJsonRedisFrame))->getData(), (dynamic_cast<DataQueueStatus*>(inJsonRedisFrame))->pid);
 	} else if (DBWorkersStatus::itIsString(inJsonRedisFrame->frameType)) {
 		_setStatuses((dynamic_cast<DBWorkersStatus*>(inJsonRedisFrame))->getData());
 	}
@@ -68,6 +67,18 @@ void
 ManagerProcessor::setQueueStatus_STAND_BY() {
 	_setQueueStatus_STAND_BY();
 }
+
+void
+ManagerProcessor::setStatusAfterRequestDB() {
+	int pid = -1;
+
+	if ( imAlone() ) {
+		_setQueueStatus_OPEN();
+	} else {
+		_setQueueStatus_STAND_BY();
+	}
+}
+
 
 bool
 ManagerProcessor::processedByOther() {
@@ -113,7 +124,7 @@ ManagerProcessor::_setStatuses( WorkersStatusData& inWorkersStatusData ) {
 	for ( auto d : inWorkersStatusData.wqs ) {
 		_pidStatus[d.pid] = QueueStatus::typeFromString(d.status);
 	}
-	_engine();
+	_engine_m();
 }
 
 void
@@ -129,82 +140,42 @@ ManagerProcessor::_setStatus(  QueueData& inDataQueueStatusData, int inPid ) {
 }
 
 void
-ManagerProcessor::_engine() {
-
+ManagerProcessor::_engine_m() {
 	int pid = 0;
 
 	if ( _ctx != NULL ) {
-
-		if ( imAlone() ) { //Jezeli jest tylko jedna instancja DB_workera pomijamy limity kolejki
-			_setQueueStatus_OPEN();
-		} else {
-			/*
-			 * PARA [<PID>, <Status kolejki>] (_old_status)
-			 * Jesli para == [0,none]
-			 * 	Pobieramy jaki pid jest OPEN
-			 * 	Jesli brak -> MY OPEN
-			 * 	w przeciwnym przypadku -> MY CLOSED
-			 * Jesli para != [0,none] -> para ma stary status/jest ustawiony
-			 * Jesli stary status byl OPENED a teraz jest CLOSED lub BLOCKED
-			 *  Sprawdzamy czy kolejny PID nie nasz
-			 *  	Jesli NIE nic nie rob
-			 *  	Jesli TAK
-			 *  	MY OPEN
-			 *  	---- deprecated ----
-			 *  		Jesli kolejka status BLOCKED
-			 *  			TAK:
-			 *  		  		Sprawdzic czy ponizej opened
-			 *  		  			TAK -> MY OPEN
-			 *  		  			NIE -> nic nie rob
-			 *  		  	NIE:
-			 *  		  		Sprawdzic czy osiagnieto max
-			 *  		  			TAK -> MY BLOCKED
-			 *  		  			NIE -> MY OPENED
-			 */
-
-			if ( _old_status.first == 0 ) {
-				if (_getOpenPID(pid)) { //Pobieramy jaki pid jest OPEN
-					//Jest ktos otwarty ->MY STAND_BY
-					if ( pid != _ctx->pid ) {
-						if (!(_ctx->redisDataBus.isQueueStatus( QueueStatus::Type::BLOCKED))) {
-							_setQueueStatus_STAND_BY();
-						}
-					}
-
-				} else if ( _getClosedPID(pid) ) {
-					if (_amInext(pid)) {
-						_setQueueStatus_OPEN();
-					} else {
-						_setQueueStatus_STAND_BY();
-					}
-
-				} else { //Jesli brak -> MY OPEN
-					_setQueueStatus_OPEN();
-				}
+		if (_ctx->redisDataBus.isQueueStatus( QueueStatus::Type::START)) {
+			if ( _getOpenPID(pid) ) {
+				_setQueueStatus_STAND_BY();
 			} else {
-				//Jesli stary status byl OPENED a teraz jest CLOSED lub BLOCKED
-				if ( (QueueStatus::Type::OPEN == _old_status.second) &&
-					 ((QueueStatus::Type::CLOSED == _pidStatus[_old_status.first]) || (QueueStatus::Type::BLOCKED == _pidStatus[_old_status.first]) || (QueueStatus::Type::STAND_BY == _pidStatus[_old_status.first]) )
-				   ) {
-					//Sprawdzamy czy kolejny PID to my
-					if (_amInext(_old_status.first)) {
-						_setQueueStatus_OPEN();
-					} else if ( (QueueStatus::Type::OPEN == _old_status.second) && (QueueStatus::Type::CLOSED == _pidStatus[_old_status.first]) ) {
-						//Jakis proces przetwarza nowe zapytanie
-						_setProcessedNewFrameFromBus();
-				    } else if ( (QueueStatus::Type::CLOSED == _old_status.second) && (QueueStatus::Type::STAND_BY == _pidStatus[_old_status.first]) ) {
-						//Jakis proces przetworzyl i czeka na zadanie
-				    	_setNotSetNewFrameFromBus();
-				    } else {
-						//NIE -> nic nie rob
-					}
+				if ( _iMFirst() ) {
+					_setQueueStatus_OPEN();
 				} else {
-
+					_setQueueStatus_STAND_BY();
 				}
 			}
-			_clearOldStatus();
+
 		}
 	}
+}
+
+void
+ManagerProcessor::_engine() {
+	if ( (QueueStatus::Type::OPEN == _old_status.second) &&
+		 ((QueueStatus::Type::CLOSED == _pidStatus[_old_status.first]) || (QueueStatus::Type::BLOCKED == _pidStatus[_old_status.first]) || (QueueStatus::Type::STAND_BY == _pidStatus[_old_status.first]) )
+	   ) {
+		//Sprawdzamy czy kolejny PID to my
+		if (_amInext(_old_status.first)) {
+			_setQueueStatus_OPEN();
+		} else if ( (QueueStatus::Type::OPEN == _old_status.second) && (QueueStatus::Type::CLOSED == _pidStatus[_old_status.first]) ) {
+			//Jakis proces przetwarza nowe zapytanie
+			_setProcessedNewFrameFromBus();
+	    } else if ( (QueueStatus::Type::CLOSED == _old_status.second) && (QueueStatus::Type::STAND_BY == _pidStatus[_old_status.first]) ) {
+			//Jakis proces przetworzyl i czeka na zadanie
+	    	_setNotSetNewFrameFromBus();
+	    } else {}
+	} else {}
+	_clearOldStatus();
 }
 
 bool
@@ -229,6 +200,15 @@ ManagerProcessor::_amInext( int &inPid ) {
 			}
 		}
 	}
+
+	return outStatus;
+}
+
+bool
+ManagerProcessor::_iMFirst() {
+	bool outStatus = false;
+
+	if ( _pidStatus.begin()->first == _ctx->pid ) outStatus = true;
 
 	return outStatus;
 }
@@ -287,6 +267,26 @@ ManagerProcessor::_getClosedPID(int &outPid) {
 	return outStatus;
 }
 
+bool
+ManagerProcessor::_getBlockedPID(int &outPid) {
+	bool outStatus = false;
+	auto it = _pidStatus.begin();
+
+	outPid = 0;
+
+	for (; ((it != _pidStatus.end()) && (it->second != QueueStatus::Type::BLOCKED)); ++it);
+
+	if (it != _pidStatus.end()) {
+		outPid = it->first;
+		outStatus = true;
+	} else {
+		outPid = 0;
+	}
+
+
+	return outStatus;
+}
+
 void
 ManagerProcessor::_clearOldStatus() {
 	_old_status = std::make_pair(0,QueueStatus::Type::none);
@@ -322,6 +322,7 @@ ManagerProcessor::_setQueueStatus_BLOCKED() {
 
 void
 ManagerProcessor::_setQueueStatus_STAND_BY() {
+	int pid = -1;
 	if (_ctx != NULL ) {
 		if (!(_ctx->redisDataBus.isQueueStatus( QueueStatus::Type::STAND_BY))) { //Czy nie jesteśmy juz STAND_BY?
 			_ctx->redisDataBus.setQueueStatus_STAND_BY();

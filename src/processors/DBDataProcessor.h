@@ -11,6 +11,8 @@
 #ifndef PROCESSORS_DBDATAPROCESSOR_H_
 #define PROCESSORS_DBDATAPROCESSOR_H_
 
+#include <event2/event.h>
+
 #include "../redis_bus/frames/JsonRedisMainFrame.h"
 #include "../db/DBDataMatrix.h"
 
@@ -35,6 +37,20 @@ private:
 	 * Stores data resulting from a database query.
 	 */
 	DBDataMatrix _dbDataMatrix;
+
+	/**
+	 * Time value Delay in checking whether, with the STAND BY status, you need to query the database.
+	 *
+	 * @see libevent
+	 */
+	struct timeval tv_stand_by_delay;
+
+	/**
+	 * Event checking whether, with the STAND BY status, you need to query the database.
+	 *
+	 * @see libevent
+	 */
+	struct event* stand_by_ev;
 
 public:
 	DBDataProcessor();
@@ -94,6 +110,17 @@ private:
 	 * @param inFrame frame from redis data bus
 	 */
 	void _transferResponse(DataDBRequest *inFrame);
+
+	/**
+	 * Callback function for checking whether, with the STAND BY status, you need to query the database.
+	 *
+	 * @See libevent callback
+	 *
+	 * @param fd The file descriptor
+	 * @param what Is a set of the flags listed above.
+	 * @param ptr The value that was passed in for arg when the function was constructed.
+	 */
+	static void _engine_stand_by_check_cb(evutil_socket_t fd, short what, void *ptr);
 
 };
 
